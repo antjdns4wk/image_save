@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GitHub 이미지 업로더</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #151922;
+      --muted: #687081;
+      --line: #e3e7ef;
+      --accent: #1f6feb;
+      --accent-dark: #1559c7;
+      --danger-bg: #fff3f0;
+      --danger-text: #b42318;
+      --success-bg: #ecfdf3;
+      --success-text: #027a48;
+      --code-bg: #f2f4f7;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 18px 64px;
+    }
+
+    header {
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    @media (min-width: 900px) {
+      .grid {
+        grid-template-columns: 380px 1fr;
+        align-items: start;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #333b49;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 12px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.12);
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .notice.warning {
+      background: #fff8e5;
+      color: #7a4d00;
+      border: 1px solid #ffe2a8;
+    }
+
+    .notice.danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid #ffd2c9;
+    }
+
+    .notice.success {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid #b7f0ca;
+    }
+
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 18px;
+      padding: 34px 20px;
+      text-align: center;
+      background: #fbfcff;
+      transition: 0.18s ease;
+      cursor: pointer;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: #eef5ff;
+    }
+
+    .dropzone strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .dropzone p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      height: 44px;
+      padding: 0 15px;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button.secondary {
+      background: #eef2f7;
+      color: #263244;
+    }
+
+    button.secondary:hover {
+      background: #e2e8f0;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .files {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .file-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .file-top {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+    }
+
+    .file-name {
+      font-weight: 800;
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+
+    .file-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .status.ok {
+      color: var(--success-text);
+    }
+
+    .status.err {
+      color: var(--danger-text);
+    }
+
+    .url-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .url-row {
+      display: grid;
+      grid-template-columns: 92px 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .url-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .url-box {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--code-bg);
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .copy {
+      height: 34px;
+      padding: 0 10px;
+      font-size: 12px;
+      background: #eef2f7;
+      color: #263244;
+    }
+
+    .progress {
+      width: 100%;
+      height: 8px;
+      background: #eef2f7;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.2s ease;
+    }
+
+    .manual {
+      margin-top: 18px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    .manual textarea {
+      width: 100%;
+      min-height: 96px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .manual-result {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .checkline {
+      display: flex;
+      gap: 8px;
+      align-items: start;
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .checkline input {
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>GitHub 이미지 업로더</h1>
+      <p class="lead">이미지를 GitHub 저장소에 업로드하고, 상세페이지·랜딩페이지·HTML에서 불러올 수 있는 이미지 URL을 자동 생성합니다.</p>
+    </header>
+
+    <section class="grid">
+      <aside class="card">
+        <h2>1. 저장소 설정</h2>
+
+        <div class="notice warning">
+          이 페이지는 서버 없이 작동합니다. GitHub에 실제 업로드하려면 개인용 토큰이 필요합니다. 토큰은 이 페이지에 저장하지 않는 것을 권장합니다.
+        </div>
+
+        <div class="field">
+          <label for="owner">GitHub 아이디 / 조직명</label>
+          <input id="owner" type="text" placeholder="예: mandayoon" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label for="repo">저장소 이름</label>
+          <input id="repo" type="text" placeholder="예: image-hosting" autocomplete="off" />
+          <div class="hint">GitHub Pages를 켠 공개 저장소를 권장합니다.</div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="branch">브랜치</label>
+            <input id="branch" type="text" value="main" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="folder">업로드 폴더</label>
+            <input id="folder" type="text" value="images" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="token">GitHub Fine-grained Token</label>
+          <input id="token" type="password" placeholder="토큰을 붙여넣으세요" autocomplete="off" />
+          <div class="hint">권한은 해당 저장소의 Contents: Read and write만 주는 것을 권장합니다.</div>
+          <label class="checkline">
+            <input id="rememberSettings" type="checkbox" />
+            <span>토큰 제외, 아이디·저장소·브랜치·폴더만 이 브라우저에 저장</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="saveSettings" type="button" class="secondary">설정 저장</button>
+          <button id="clearSettings" type="button" class="secondary">초기화</button>
+        </div>
+
+        <div class="manual">
+          <h2>수동 URL 생성</h2>
+          <p class="small">GitHub에 직접 올린 파일명도 여기 넣으면 URL을 만들 수 있습니다. 한 줄에 하나씩 입력하세요.</p>
+          <textarea id="manualNames" placeholder="예: product-main.jpg&#10;detail/section-01.png"></textarea>
+          <div class="actions">
+            <button id="makeUrls" type="button" class="secondary">URL 만들기</button>
+          </div>
+          <div id="manualResult" class="manual-result"></div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <h2>2. 이미지 업로드</h2>
+
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="이미지 선택">
+          <strong>이미지를 끌어오거나 클릭해서 선택</strong>
+          <p>JPG, PNG, GIF, WebP, SVG 업로드 가능 / 여러 장 가능</p>
+          <input id="fileInput" type="file" accept="image/*" multiple />
+        </div>
+
+        <div class="actions">
+          <button id="uploadBtn" type="button" disabled>선택한 이미지 업로드</button>
+          <button id="resetFiles" type="button" class="secondary">선택 목록 비우기</button>
+        </div>
+
+        <div id="summary" class="footer-note">아직 선택된 이미지가 없습니다.</div>
+        <div id="files" class="files"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      files: []
+    };
+
+    const els = {
+      owner: $("owner"),
+      repo: $("repo"),
+      branch: $("branch"),
+      folder: $("folder"),
+      token: $("token"),
+      rememberSettings: $("rememberSettings"),
+      saveSettings: $("saveSettings"),
+      clearSettings: $("clearSettings"),
+      dropzone: $("dropzone"),
+      fileInput: $("fileInput"),
+      uploadBtn: $("uploadBtn"),
+      resetFiles: $("resetFiles"),
+      files: $("files"),
+      summary: $("summary"),
+      manualNames: $("manualNames"),
+      makeUrls: $("makeUrls"),
+      manualResult: $("manualResult")
+    };
+
+    function loadSettings() {
+      const saved = localStorage.getItem("githubImageUploaderSettings");
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        els.owner.value = data.owner || "";
+        els.repo.value = data.repo || "";
+        els.branch.value = data.branch || "main";
+        els.folder.value = data.folder || "images";
+        els.rememberSettings.checked = true;
+      } catch (_) {}
+    }
+
+    function saveSettings() {
+      if (!els.rememberSettings.checked) {
+        localStorage.removeItem("githubImageUploaderSettings");
+        alert("저장 옵션이 꺼져 있어 설정을 저장하지 않았습니다.");
+        return;
+      }
+
+      localStorage.setItem("githubImageUploaderSettings", JSON.stringify({
+        owner: els.owner.value.trim(),
+        repo: els.repo.value.trim(),
+        branch: els.branch.value.trim() || "main",
+        folder: normalizeFolder(els.folder.value.trim())
+      }));
+
+      alert("토큰을 제외한 설정을 저장했습니다.");
+    }
+
+    function clearSettings() {
+      localStorage.removeItem("githubImageUploaderSettings");
+      els.owner.value = "";
+      els.repo.value = "";
+      els.branch.value = "main";
+      els.folder.value = "images";
+      els.token.value = "";
+      els.rememberSettings.checked = false;
+      alert("설정을 초기화했습니다.");
+    }
+
+    function normalizeFolder(folder) {
+      return (folder || "images")
+        .replace(/^\/+|\/+$/g, "")
+        .replace(/\/{2,}/g, "/");
+    }
+
+    function safeName(name) {
+      const lastDot = name.lastIndexOf(".");
+      const rawBase = lastDot > -1 ? name.slice(0, lastDot) : name;
+      const rawExt = lastDot > -1 ? name.slice(lastDot + 1) : "";
+      const base = rawBase
+        .normalize("NFKD")
+        .replace(/[^\w가-힣.-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 70) || "image";
+      const ext = rawExt
+        .replace(/[^\w]/g, "")
+        .toLowerCase() || "jpg";
+      const stamp = new Date().toISOString()
+        .replace(/[-:]/g, "")
+        .replace(/\.\d+Z$/, "");
+      const rand = Math.random().toString(36).slice(2, 8);
+      return `${stamp}-${rand}-${base}.${ext}`;
+    }
+
+    function encodePath(path) {
+      return path.split("/").map(encodeURIComponent).join("/");
+    }
+
+    function getConfig() {
+      const owner = els.owner.value.trim();
+      const repo = els.repo.value.trim();
+      const branch = els.branch.value.trim() || "main";
+      const folder = normalizeFolder(els.folder.value.trim());
+      const token = els.token.value.trim();
+
+      if (!owner || !repo || !branch || !folder) {
+        throw new Error("GitHub 아이디, 저장소 이름, 브랜치, 업로드 폴더를 모두 입력하세요.");
+      }
+
+      return { owner, repo, branch, folder, token };
+    }
+
+    function buildUrls({ owner, repo, branch, path }) {
+      const encoded = encodePath(path);
+      const isUserSiteRepo = repo.toLowerCase() === `${owner.toLowerCase()}.github.io`;
+
+      return {
+        cdn: `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${encoded}`,
+        raw: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encoded}`,
+        pages: isUserSiteRepo
+          ? `https://${owner}.github.io/${encoded}`
+          : `https://${owner}.github.io/${repo}/${encoded}`
+      };
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    async function fileToBase64(file) {
+      const buffer = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 0x8000;
+
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+
+      return btoa(binary);
+    }
+
+    function selectFiles(fileList) {
+      const imageFiles = Array.from(fileList).filter(file => file.type.startsWith("image/"));
+      const mapped = imageFiles.map(file => ({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        file,
+        uploadName: safeName(file.name),
+        status: "ready",
+        message: "업로드 대기 중",
+        progress: 0,
+        urls: null,
+        preview: URL.createObjectURL(file)
+      }));
+
+      state.files.push(...mapped);
+      renderFiles();
+    }
+
+    function renderFiles() {
+      els.files.innerHTML = "";
+      els.uploadBtn.disabled = state.files.length === 0;
+      els.summary.textContent = state.files.length
+        ? `${state.files.length}개 이미지가 선택되었습니다.`
+        : "아직 선택된 이미지가 없습니다.";
+
+      for (const item of state.files) {
+        const card = document.createElement("article");
+        card.className = "file-card";
+        card.dataset.id = item.id;
+
+        const statusClass = item.status === "done" ? "ok" : item.status === "error" ? "err" : "";
+
+        card.innerHTML = `
+          <div class="file-top">
+            <img class="thumb" src="${item.preview}" alt="">
+            <div>
+              <div class="file-name">${escapeHtml(item.file.name)}</div>
+              <div class="file-meta">${formatBytes(item.file.size)} · 저장 파일명: ${escapeHtml(item.uploadName)}</div>
+              <div class="progress" aria-hidden="true"><div class="bar" style="width:${item.progress}%"></div></div>
+              <div class="status ${statusClass}">${escapeHtml(item.message)}</div>
+            </div>
+          </div>
+          ${item.urls ? renderUrlList(item.urls) : ""}
+        `;
+
+        els.files.appendChild(card);
+      }
+    }
+
+    function renderUrlList(urls) {
+      const rows = [
+        ["추천 CDN", urls.cdn],
+        ["Pages", urls.pages],
+        ["Raw", urls.raw]
+      ];
+
+      return `
+        <div class="url-list">
+          ${rows.map(([label, url]) => `
+            <div class="url-row">
+              <div class="url-label">${label}</div>
+              <div class="url-box" title="${url}">${url}</div>
+              <button class="copy" type="button" data-copy="${url}">복사</button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateItem(id, patch) {
+      const target = state.files.find(item => item.id === id);
+      if (!target) return;
+      Object.assign(target, patch);
+      renderFiles();
+    }
+
+    async function uploadOne(item, config) {
+      if (!config.token) {
+        throw new Error("GitHub 토큰을 입력해야 실제 업로드가 가능합니다.");
+      }
+
+      const path = `${config.folder}/${item.uploadName}`;
+      const content = await fileToBase64(item.file);
+
+      updateItem(item.id, { status: "uploading", message: "GitHub에 업로드 중...", progress: 45 });
+
+      const endpoint = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodePath(path)}`;
+
+      const res = await fetch(endpoint, {
+        method: "PUT",
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Authorization": `Bearer ${config.token}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `upload image: ${item.uploadName}`,
+          content,
+          branch: config.branch
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const msg = data && data.message ? data.message : `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const urls = buildUrls({
+        owner: config.owner,
+        repo: config.repo,
+        branch: config.branch,
+        path
+      });
+
+      updateItem(item.id, {
+        status: "done",
+        message: "업로드 완료",
+        progress: 100,
+        urls
+      });
+    }
+
+    async function uploadAll() {
+      let config;
+
+      try {
+        config = getConfig();
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+
+      els.uploadBtn.disabled = true;
+
+      for (const item of state.files) {
+        if (item.status === "done") continue;
+
+        try {
+          updateItem(item.id, { status: "uploading", message: "파일 변환 중...", progress: 20 });
+          await uploadOne(item, config);
+        } catch (err) {
+          updateItem(item.id, {
+            status: "error",
+            message: `실패: ${err.message}`,
+            progress: 0
+          });
+        }
+      }
+
+      els.uploadBtn.disabled = false;
+    }
+
+    function resetFiles() {
+      for (const item of state.files) {
+        URL.revokeObjectURL(item.preview);
+      }
+      state.files = [];
+      renderFiles();
+    }
+
+    function makeManualUrls() {
+      let config;
+      try {
+        config = getConfig();
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+
+      const names = els.manualNames.value
+        .split(/\r?\n/)
+        .map(v => v.trim())
+        .filter(Boolean);
+
+      els.manualResult.innerHTML = "";
+
+      if (!names.length) {
+        els.manualResult.innerHTML = `<div class="notice danger">파일명을 한 줄 이상 입력하세요.</div>`;
+        return;
+      }
+
+      for (const name of names) {
+        const clean = name.replace(/^\/+/, "");
+        const path = clean.startsWith(`${config.folder}/`) ? clean : `${config.folder}/${clean}`;
+        const urls = buildUrls({
+          owner: config.owner,
+          repo: config.repo,
+          branch: config.branch,
+          path
+        });
+
+        const box = document.createElement("div");
+        box.className = "file-card";
+        box.innerHTML = `
+          <div class="file-name">${escapeHtml(path)}</div>
+          ${renderUrlList(urls)}
+        `;
+        els.manualResult.appendChild(box);
+      }
+    }
+
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-copy]");
+      if (!btn) return;
+
+      const text = btn.getAttribute("data-copy");
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = "복사됨";
+        setTimeout(() => btn.textContent = old, 1000);
+      } catch (_) {
+        prompt("복사할 URL입니다.", text);
+      }
+    });
+
+    els.dropzone.addEventListener("click", () => els.fileInput.click());
+    els.dropzone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        els.fileInput.click();
+      }
+    });
+
+    els.fileInput.addEventListener("change", (e) => {
+      selectFiles(e.target.files);
+      e.target.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach(eventName => {
+      els.dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        els.dropzone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      els.dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        els.dropzone.classList.remove("dragover");
+      });
+    });
+
+    els.dropzone.addEventListener("drop", (e) => {
+      selectFiles(e.dataTransfer.files);
+    });
+
+    els.uploadBtn.addEventListener("click", uploadAll);
+    els.resetFiles.addEventListener("click", resetFiles);
+    els.saveSettings.addEventListener("click", saveSettings);
+    els.clearSettings.addEventListener("click", clearSettings);
+    els.makeUrls.addEventListener("click", makeManualUrls);
+
+    loadSettings();
+    renderFiles();
+  </script>
+</body>
+</html>
